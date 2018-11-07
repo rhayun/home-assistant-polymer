@@ -64,6 +64,18 @@ class LongPress extends HTMLElement implements LongPress {
       return;
     }
     element.longPress = true;
+    element.addEventListener("touchstart", (ev: Event) => {
+      const e = ev || window.event;
+      if (e.preventDefault) {
+        e.preventDefault();
+      }
+      if (e.stopPropagation) {
+        e.stopPropagation();
+      }
+      e.cancelBubble = true;
+      e.returnValue = false;
+      return false;
+    });
     element.addEventListener(
       isTouch ? "touchstart" : "mousedown",
       (ev: Event) => {
@@ -84,7 +96,7 @@ class LongPress extends HTMLElement implements LongPress {
       },
       { passive: true }
     );
-    element.addEventListener("click", () => {
+    element.addEventListener(isTouch ? "touchend" : "click", () => {
       this.stopAnimation();
       if (this.held) {
         element.dispatchEvent(new Event("ha-hold"));
