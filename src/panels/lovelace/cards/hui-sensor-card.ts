@@ -8,11 +8,12 @@ import {
 import { TemplateResult } from "lit-html";
 import "@polymer/paper-spinner/paper-spinner";
 
-import { LovelaceCard } from "../types";
+import { LovelaceCard, LovelaceCardEditor } from "../types";
 import { LovelaceCardConfig } from "../../../data/lovelace";
 import { HomeAssistant } from "../../../types";
 import { fireEvent } from "../../../common/dom/fire_event";
 
+import applyThemesOnElement from "../../../common/dom/apply_themes_on_element";
 import computeStateName from "../../../common/entity/compute_state_name";
 import stateIcon from "../../../common/entity/state_icon";
 
@@ -132,17 +133,27 @@ const coordinates = (
   return calcPoints(history, hours, width, detail, min, max);
 };
 
-interface Config extends LovelaceCardConfig {
+export interface Config extends LovelaceCardConfig {
   entity: string;
   name?: string;
   icon?: string;
   graph?: string;
   unit?: string;
   detail?: number;
+  theme?: string;
   hours_to_show?: number;
 }
 
 class HuiSensorCard extends LitElement implements LovelaceCard {
+  public static async getConfigElement(): Promise<LovelaceCardEditor> {
+    await import("../editor/config-elements/hui-sensor-card-editor");
+    return document.createElement("hui-sensor-card-editor");
+  }
+
+  public static getStubConfig(): object {
+    return {};
+  }
+
   public hass?: HomeAssistant;
   private _config?: Config;
   private _history?: any;
@@ -163,6 +174,7 @@ class HuiSensorCard extends LitElement implements LovelaceCard {
 
     const cardConfig = {
       detail: 1,
+      theme: "default",
       hours_to_show: 24,
       ...config,
     };
@@ -262,8 +274,13 @@ class HuiSensorCard extends LitElement implements LovelaceCard {
   }
 
   protected updated(changedProps: PropertyValues) {
-    if (this._config && this._config.graph !== "line") {
+    if (!this._config || this._config.graph !== "line" || !this.hass) {
       return;
+    }
+
+    const oldHass = changedProps.get("hass") as HomeAssistant | undefined;
+    if (!oldHass || oldHass.themes !== this.hass.themes) {
+      applyThemesOnElement(this, this.hass.themes, this._config!.theme);
     }
 
     const minute = 60000;
