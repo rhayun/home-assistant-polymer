@@ -30,6 +30,7 @@ const thermostatConfig = {
   lineCap: "round",
   handleSize: "+10",
   showTooltip: false,
+  animation: false,
 };
 
 const modeIcons = {
@@ -152,6 +153,7 @@ export class HuiThermostatCard extends hassLocalizeLitMixin(LitElement)
   }
 
   protected updated(changedProps: PropertyValues): void {
+    super.updated(changedProps);
     if (!this._config || !this.hass || !changedProps.has("hass")) {
       return;
     }
